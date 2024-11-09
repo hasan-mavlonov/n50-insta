@@ -1,15 +1,18 @@
 import threading
-
-from django.shortcuts import render
-from rest_framework import generics, permissions, status
+from twilio.rest import Client
+from django.conf import settings
+from django.http import HttpResponse
+from rest_framework import generics, status
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import RefreshToken
 
 from accounts.models import UserModel
-from accounts.serializers import RegisterSerializer, EmailVerificationSerializer, LoginSerializer, ResendCodeSerializer
-from accounts.signals import send_verification_email
+from accounts.serializers import RegisterSerializer, EmailVerificationSerializer, LoginSerializer, \
+    ResendEmailCodeSerializer, \
+    PhoneVerificationSerializer, ResendPhoneCodeSerializer
+from accounts.signals import send_verification_email, send_verification_phone
 
 
 class RegisterView(generics.CreateAPIView):
@@ -50,6 +53,31 @@ class EmailConfirmationView(generics.GenericAPIView):
         return Response({"error": "Invalid data"}, status=status.HTTP_400_BAD_REQUEST)
 
 
+class PhoneConfirmationView(generics.GenericAPIView):
+    permission_classes = [AllowAny]
+    serializer_class = PhoneVerificationSerializer
+
+    def post(self, request):
+        serializer = PhoneVerificationSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        validated_data = serializer.validated_data
+        user = validated_data.get('user')
+        phone_verification_code = validated_data.get('phone_verification_code_instance')
+
+        if user and phone_verification_code:
+            user.is_active = True
+            user.save()
+            phone_verification_code.delete()
+
+            response = {
+                'success': True,
+                'message': "Phone verified successfully!"
+            }
+            return Response(response, status=status.HTTP_200_OK)
+
+        return Response({"error": "Invalid data"}, status=status.HTTP_400_BAD_REQUEST)
+
+
 class LoginView(APIView):
     serializer_class = LoginSerializer
 
@@ -67,7 +95,7 @@ class LoginView(APIView):
 
 class ResendEmailVerificationView(APIView):
     permission_classes = [AllowAny]
-    serializer_class = ResendCodeSerializer
+    serializer_class = ResendEmailCodeSerializer
 
     def post(self, request):
         serializer = self.serializer_class(data=request.data)
@@ -77,5 +105,21 @@ class ResendEmailVerificationView(APIView):
         response = {
             'success': True,
             'message': "New code has been sent to your mail"
+        }
+        return Response(response, status=status.HTTP_200_OK)
+
+
+class ResendPhoneVerificationView(APIView):
+    permission_classes = [AllowAny]
+    serializer_class = ResendPhoneCodeSerializer
+
+    def post(self, request):
+        serializer = self.serializer_class(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        phone_thread = threading.Thread(target=send_verification_phone, args=('phone_number',))
+        send_verification_phone(phone_number=serializer.validated_data['phone_number'])
+        response = {
+            'success': True,
+            'message': "New code has been sent to your phone number"
         }
         return Response(response, status=status.HTTP_200_OK)

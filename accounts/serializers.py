@@ -65,26 +65,15 @@ class EmailVerificationSerializer(serializers.ModelSerializer):
     def validate(self, attrs):
         try:
             user = UserModel.objects.get(email=attrs.get('email'))
-        except UserModel.DoesNotExist:
-            raise serializers.ValidationError('User with this email does not exist.')
-        try:
             email_verification_code = EmailVerificationModel.objects.get(
                 user=user, email_verification_code=attrs['email_verification_code']
             )
-        except EmailVerificationModel.DoesNotExist:
-            raise serializers.ValidationError('Email verification code does not exist or is incorrect.')
-
-        # Check if created_at is None or expired
+        except Exception as e:
+            raise serializers.ValidationError(f"Error{e}")
         current_time = timezone.now()
-        if email_verification_code.created_at is None:
-            raise serializers.ValidationError('Verification code timestamp is missing.')
-
         if email_verification_code.created_at + timedelta(minutes=2) < current_time:
-            # Optionally, delete expired codes
             email_verification_code.delete()
             raise serializers.ValidationError('Email verification code has expired.')
-
-        # Add user and email_verification_code_instance to attrs so they can be used in the view
         attrs['user'] = user
         attrs['email_verification_code_instance'] = email_verification_code
         return attrs
@@ -92,19 +81,26 @@ class EmailVerificationSerializer(serializers.ModelSerializer):
 
 class PhoneVerificationSerializer(serializers.ModelSerializer):
     phone_number = serializers.CharField()
-    code = serializers.CharField(max_length=4)
+    phone_verification_code = serializers.CharField(max_length=4)
+
+    class Meta:
+        model = PhoneVerificationModel
+        fields = ['phone_number', 'phone_verification_code']
 
     def validate(self, attrs):
         try:
-            user_phone_code = PhoneVerificationModel(phone_number=attrs['phone_number'],
-                                                     code=attrs['phone_verification_code'])
-        except PhoneVerificationModel.DoesNotExist:
-            raise serializers.ValidationError('Phone verification code does not exist')
-
+            user = UserModel.objects.get(phone_number=attrs.get('phone_number'))
+            phone_verification_code = PhoneVerificationModel.objects.get(
+                user=user, phone_verification_code=attrs['phone_verification_code']
+            )
+        except Exception as e:
+            raise serializers.ValidationError(f"Error{e}")
         current_time = timezone.now()
-        if user_phone_code.created_at + timedelta(minutes=2) < current_time:
-            user_phone_code.delete()
-            raise serializers.ValidationError('Phone verification code has expired')
+        if phone_verification_code.created_at + timedelta(minutes=2) < current_time:
+            phone_verification_code.delete()
+            raise serializers.ValidationError('Phone verification code has expired.')
+        attrs['user'] = user
+        attrs['phone_verification_code_instance'] = phone_verification_code
         return attrs
 
 
@@ -133,8 +129,8 @@ class LoginSerializer(serializers.Serializer):
         return attrs
 
 
-class ResendCodeSerializer(serializers.Serializer):
-    email = serializers.EmailField
+class ResendEmailCodeSerializer(serializers.ModelSerializer):
+    email = serializers.EmailField()
 
     def validate(self, attrs):
         email = attrs.get('email')
@@ -142,11 +138,26 @@ class ResendCodeSerializer(serializers.Serializer):
             user = UserModel.objects.get(email=email)
         except UserModel.DoesNotExist:
             raise serializers.ValidationError('User with this email does not exist.')
-        email_verification_code = EmailVerificationModel.objects.get(user=user, email_verification_code=attrs[
-            'email_verification_code'])
-        if email_verification_code:
-            current_time = timezone.now()
-            if email_verification_code.created_at + timedelta(minutes=2) > current_time:
-                raise serializers.ValidationError('The verification code was sent to your mail.')
         attrs['user'] = user
         return attrs
+
+    class Meta:
+        model = EmailVerificationModel
+        fields = ['email']
+
+
+class ResendPhoneCodeSerializer(serializers.ModelSerializer):
+    phone_number = serializers.CharField()
+
+    def validate(self, attrs):
+        phone_number = attrs.get('phone_number')
+        try:
+            user = UserModel.objects.get(phone_number=phone_number)
+        except UserModel.DoesNotExist:
+            raise serializers.ValidationError('User with this phone number does not exist.')
+        attrs['user'] = user
+        return attrs
+
+    class Meta:
+        model = PhoneVerificationModel
+        fields = ['phone_number']
