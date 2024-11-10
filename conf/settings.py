@@ -12,6 +12,7 @@ https://docs.djangoproject.com/en/5.1/ref/settings/
 from datetime import timedelta
 from pathlib import Path
 import environ
+
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -38,6 +39,8 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
     'accounts',
     'rest_framework',
+    'rest_framework.authtoken',
+    'posts',
 
 ]
 
@@ -180,10 +183,13 @@ REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": (
         "rest_framework_simplejwt.authentication.JWTAuthentication",
         "rest_framework.authentication.TokenAuthentication"
+    ),
+    "DEFAULT_PAGINATION_CLASS": (
+        'rest_framework.permissions.AllowAny',
     )
 }
-
 
 TWILIO_ACCOUNT_SID = env("MY_ACCOUNT_SID")
 TWILIO_AUTH_TOKEN = env("TWILIO_AUTH_TOKEN")
 TWILIO_NUMBER = env("MY_TWILIO_NUMBER")
+APPEND_SLASH = True

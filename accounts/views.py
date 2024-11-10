@@ -1,17 +1,14 @@
 import threading
-from twilio.rest import Client
-from django.conf import settings
-from django.http import HttpResponse
 from rest_framework import generics, status
-from rest_framework.permissions import AllowAny
+from rest_framework.pagination import PageNumberPagination
+from rest_framework.permissions import AllowAny, IsAdminUser
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import RefreshToken
-
 from accounts.models import UserModel
 from accounts.serializers import RegisterSerializer, EmailVerificationSerializer, LoginSerializer, \
     ResendEmailCodeSerializer, \
-    PhoneVerificationSerializer, ResendPhoneCodeSerializer
+    PhoneVerificationSerializer, ResendPhoneCodeSerializer, UserModelSerializer
 from accounts.signals import send_verification_email, send_verification_phone
 
 
@@ -123,3 +120,10 @@ class ResendPhoneVerificationView(APIView):
             'message': "New code has been sent to your phone number"
         }
         return Response(response, status=status.HTTP_200_OK)
+
+
+class AllAccountsView(generics.ListAPIView):
+    permission_classes = [IsAdminUser]
+    pagination_class = PageNumberPagination
+    serializer_class = UserModelSerializer
+    queryset = UserModel.objects.all()

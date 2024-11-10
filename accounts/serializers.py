@@ -8,6 +8,12 @@ from django.utils import timezone
 from accounts.models import UserModel, EmailVerificationModel, PhoneVerificationModel
 
 
+class UserModelSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = UserModel
+        fields = '__all__'
+
+
 class RegisterSerializer(serializers.ModelSerializer):
     confirm_password = serializers.CharField(write_only=True, max_length=120)
     phone_number = serializers.CharField(max_length=120, required=False)
