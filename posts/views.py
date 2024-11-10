@@ -1,16 +1,14 @@
-from django.shortcuts import render
-from django.views.generic import CreateView
-from rest_framework.generics import CreateAPIView
+from rest_framework import status
+from rest_framework.generics import CreateAPIView, ListAPIView, UpdateAPIView, DestroyAPIView
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.permissions import IsAuthenticated
-from rest_framework_simplejwt.authentication import JWTAuthentication
+from rest_framework.response import Response
 
 from posts.models import PostModel
-from posts.serializers import PostCreateSerializer
+from posts.serializers import PostCreateSerializer, PostListSerializer
 
 
 class PostCreateView(CreateAPIView):
-    authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticated]
     pagination_class = PageNumberPagination
     serializer_class = PostCreateSerializer
@@ -20,3 +18,36 @@ class PostCreateView(CreateAPIView):
         post = serializer.save(user=self.request.user)
         post.save()
         return post
+
+
+class PostListView(ListAPIView):
+    permission_classes = [IsAuthenticated]
+    pagination_class = PageNumberPagination
+    serializer_class = PostListSerializer
+
+    def get_queryset(self):
+        return PostModel.objects.filter(user=self.request.user)
+
+
+class PostEditView(UpdateAPIView):
+    permission_classes = [IsAuthenticated]
+    serializer_class = PostCreateSerializer
+
+    def perform_update(self, serializer):
+        post = serializer.save(user=self.request.user)
+        post.save()
+        return post
+
+
+class PostDeleteView(DestroyAPIView):
+    permission_classes = [IsAuthenticated]
+    serializer_class = PostListSerializer
+    post = None
+
+    def get_queryset(self):
+        return PostModel.objects.filter(user=self.request.user)
+
+    def delete(self, request, *args, **kwargs):
+        self.post = self.get_object()
+        self.post.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
