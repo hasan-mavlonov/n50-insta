@@ -4,8 +4,8 @@ from rest_framework.pagination import PageNumberPagination
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
-from posts.models import PostModel
-from posts.serializers import PostCreateSerializer, PostListSerializer
+from posts.models import PostModel, LikeModel, CommentModel
+from posts.serializers import PostCreateSerializer, PostListSerializer, LikeSerializer, CommentSerializer
 
 
 class PostCreateView(CreateAPIView):
@@ -51,3 +51,23 @@ class PostDeleteView(DestroyAPIView):
         self.post = self.get_object()
         self.post.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+class LikeView(CreateAPIView):
+    permission_classes = [IsAuthenticated]
+    serializer_class = LikeSerializer
+    queryset = LikeModel.objects.all()
+    pagination_class = None
+
+    def perform_create(self, serializer):
+        serializer.save(user=self.request.user)
+
+
+class CommentView(CreateAPIView):
+    permission_classes = [IsAuthenticated]
+    serializer_class = CommentSerializer
+    queryset = CommentModel.objects.all()
+    pagination_class = None
+
+    def perform_create(self, serializer):
+        serializer.save(user=self.request.user)

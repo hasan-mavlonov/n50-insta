@@ -35,3 +35,17 @@ class PhoneVerificationModel(models.Model):
         verbose_name_plural = 'Phone Verification Codes'
         unique_together = (('user', 'phone_verification_code'),)
         ordering = ['created_at']
+
+
+class FollowerModel(models.Model):
+    user = models.ForeignKey(UserModel, on_delete=models.CASCADE, related_name='follower')
+    to_user = models.ForeignKey(UserModel, on_delete=models.CASCADE, related_name='following')
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.user.username} following {self.to_user.username}"
+
+    class Meta:
+        verbose_name = 'Follower'
+        verbose_name_plural = 'Followers'
+

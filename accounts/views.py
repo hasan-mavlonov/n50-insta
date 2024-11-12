@@ -1,14 +1,16 @@
 import threading
 from rest_framework import generics, status
+from rest_framework.authtoken.admin import User
+from rest_framework.generics import CreateAPIView, ListAPIView, RetrieveAPIView
 from rest_framework.pagination import PageNumberPagination
-from rest_framework.permissions import AllowAny, IsAdminUser
+from rest_framework.permissions import AllowAny, IsAdminUser, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import RefreshToken
-from accounts.models import UserModel
+from accounts.models import UserModel, FollowerModel
 from accounts.serializers import RegisterSerializer, EmailVerificationSerializer, LoginSerializer, \
     ResendEmailCodeSerializer, \
-    PhoneVerificationSerializer, ResendPhoneCodeSerializer, UserModelSerializer
+    PhoneVerificationSerializer, ResendPhoneCodeSerializer, UserModelSerializer, FollowerModelSerializer
 from accounts.signals import send_verification_email, send_verification_phone
 
 
@@ -127,3 +129,22 @@ class AllAccountsView(generics.ListAPIView):
     pagination_class = PageNumberPagination
     serializer_class = UserModelSerializer
     queryset = UserModel.objects.all()
+
+
+class FollowAccountView(CreateAPIView):
+    permission_classes = [IsAuthenticated]
+    serializer_class = FollowerModelSerializer
+    queryset = FollowerModel.objects.all()
+
+    def perform_create(self, serializer):
+        serializer.save(user=self.request.user)
+
+
+class ProfileView(RetrieveAPIView):
+    permission_classes = [IsAuthenticated]
+    serializer_class = UserModelSerializer
+    pagination_class = None
+
+    def get_object(self):
+        return self.request.user
+

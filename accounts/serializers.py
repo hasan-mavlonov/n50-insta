@@ -5,7 +5,7 @@ from django.contrib.auth.password_validation import validate_password
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 from django.utils import timezone
-from accounts.models import UserModel, EmailVerificationModel, PhoneVerificationModel
+from accounts.models import UserModel, EmailVerificationModel, PhoneVerificationModel, FollowerModel
 
 
 class UserModelSerializer(serializers.ModelSerializer):
@@ -167,3 +167,22 @@ class ResendPhoneCodeSerializer(serializers.ModelSerializer):
     class Meta:
         model = PhoneVerificationModel
         fields = ['phone_number']
+
+
+class FollowerModelSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = FollowerModel
+        fields = ['to_user']
+
+    def validate(self, attrs):
+        try:
+            user = self.context['request'].user
+            to_user = UserModel.objects.get(username=attrs.get('to_user'))
+        except Exception as e:
+            raise serializers.ValidationError(f"Error: {e}")
+        if user == to_user:
+            raise serializers.ValidationError("You cannot follow yourself.")
+
+        attrs['user'] = user
+        attrs['to_user'] = to_user
+        return attrs
