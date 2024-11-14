@@ -4,8 +4,9 @@ from rest_framework.pagination import PageNumberPagination
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
-from posts.models import PostModel, LikeModel, CommentModel
-from posts.serializers import PostCreateSerializer, PostListSerializer, LikeSerializer, CommentSerializer
+from posts.models import PostModel, LikeModel, CommentModel, CommentLikeModel
+from posts.serializers import PostCreateSerializer, PostListSerializer, LikeSerializer, CommentSerializer, \
+    CommentLikeSerializer
 
 
 class PostCreateView(CreateAPIView):
@@ -67,6 +68,16 @@ class CommentView(CreateAPIView):
     permission_classes = [IsAuthenticated]
     serializer_class = CommentSerializer
     queryset = CommentModel.objects.all()
+    pagination_class = None
+
+    def perform_create(self, serializer):
+        serializer.save(user=self.request.user)
+
+
+class CommentLikeView(CreateAPIView):
+    permission_classes = [IsAuthenticated]
+    serializer_class = CommentLikeSerializer
+    queryset = CommentLikeModel.objects.all()
     pagination_class = None
 
     def perform_create(self, serializer):

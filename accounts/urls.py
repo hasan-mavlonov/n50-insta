@@ -13,4 +13,5 @@ urlpatterns = [
     path('verify/phone/resend', views.ResendPhoneVerificationView.as_view(), name='resend_phone'),
     path('follow/<pk>', views.FollowAccountView.as_view(), name='follow'),
     path('profile/', views.ProfileView.as_view(), name='profile'),
+    path('followers/', views.FollowersView.as_view(), name='followers'),
 ]

@@ -186,3 +186,9 @@ class FollowerModelSerializer(serializers.ModelSerializer):
         attrs['user'] = user
         attrs['to_user'] = to_user
         return attrs
+
+
+class FollowersSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = FollowerModel
+        fields = '__all__'

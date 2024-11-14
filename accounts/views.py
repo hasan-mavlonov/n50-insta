@@ -10,7 +10,8 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from accounts.models import UserModel, FollowerModel
 from accounts.serializers import RegisterSerializer, EmailVerificationSerializer, LoginSerializer, \
     ResendEmailCodeSerializer, \
-    PhoneVerificationSerializer, ResendPhoneCodeSerializer, UserModelSerializer, FollowerModelSerializer
+    PhoneVerificationSerializer, ResendPhoneCodeSerializer, UserModelSerializer, FollowerModelSerializer, \
+    FollowersSerializer
 from accounts.signals import send_verification_email, send_verification_phone
 
 
@@ -148,3 +149,11 @@ class ProfileView(RetrieveAPIView):
     def get_object(self):
         return self.request.user
 
+
+class FollowersView(ListAPIView):
+    permission_classes = [IsAuthenticated]
+    serializer_class = FollowersSerializer
+    pagination_class = None
+
+    def get_queryset(self):
+        return FollowerModel.objects.filter(user=self.request.user)
