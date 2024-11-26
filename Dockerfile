@@ -1,17 +1,21 @@
-FROM python:3.11
+FROM python:3.12
 
-RUN apt-get update && apt-get install -y python3-venv passwd
-
+# Set the working directory
 WORKDIR /app
-COPY ./requirements.txt /app/requirements.txt
-RUN python -m venv /venv && \
-    /venv/bin/pip install --upgrade pip && \
-    /venv/bin/pip install -r /app/requirements.txt
 
-RUN adduser --disabled-password --gecos '' django_user && \
-    chown -R django_user /app
+# Copy requirements and install dependencies
+COPY requirements.txt /app/
+RUN pip install -r requirements.txt
 
-COPY ./ /app
+# Create and activate the virtual environment
+RUN python -m venv /venv
+RUN /venv/bin/pip install -r requirements.txt
+
+# Copy your application code
+COPY . /app
+
+# Set environment variables if needed
+ENV PYTHONPATH=/app
 
 EXPOSE 8000
 

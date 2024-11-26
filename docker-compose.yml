@@ -12,7 +12,9 @@ services:
     depends_on:
       - db
     command: >
-      sh -c "/venv/bin/python manage.py wait_for_db &&
+      sh -c "if [ ! -d /venv ]; then python -m venv /venv; fi &&
+             /venv/bin/pip install -r requirements.txt &&
+             /venv/bin/python manage.py wait_for_db &&
              /venv/bin/python manage.py migrate &&
              /venv/bin/python manage.py runserver 0.0.0.0:8000"
     networks:
