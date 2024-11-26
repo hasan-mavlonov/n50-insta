@@ -1,24 +1,49 @@
 name: Checks
 
 on: [push]
+
 jobs:
   test:
     name: Testing
     runs-on: ubuntu-20.04
+
+    services:
+      postgres:
+        image: postgres:13
+        ports:
+          - 5432:5432
+        env:
+          POSTGRES_DB: test_db
+          POSTGRES_USER: test_user
+          POSTGRES_PASSWORD: test_password
+        options: >-
+          --health-cmd="pg_isready -U test_user"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
+
     steps:
-      - name: Set up Python 3.12
-        uses: actions/setup-python@v2
-        with:
-          python-version: '3.12'
-
-      - name: Upgrade pip
-        run: python -m pip install --upgrade pip
-
-      - name: Clear pip cache
-        run: pip cache purge
-
-      - name: Checkout
+      - name: Checkout code
         uses: actions/checkout@v3
 
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: 3.12  # Adjust as per your requirement
+
+      - name: Install dependencies
+        run: |
+          python -m venv venv
+          source venv/bin/activate
+          pip install -r requirements.txt
+
+      - name: Wait for PostgreSQL to be ready
+        run: |
+          dockerize -wait tcp://localhost:5432 -timeout 1m
+
       - name: Run tests
-        run: docker compose run --rm web sh -c "python manage.py wait_for_db && python manage.py test"
+        run: |
+          source venv/bin/activate
+          python manage.py wait_for_db
+          python manage.py migrate
+          python manage.py test
