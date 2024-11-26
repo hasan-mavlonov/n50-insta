@@ -12,11 +12,23 @@ services:
     depends_on:
       - db
     command: >
-      sh -c "if [ ! -d /venv ]; then python -m venv /venv; fi &&
-             /venv/bin/pip install -r requirements.txt &&
-             /venv/bin/python manage.py wait_for_db &&
-             /venv/bin/python manage.py migrate &&
-             /venv/bin/python manage.py runserver 0.0.0.0:8000"
+      sh -c "
+        if [ ! -d /venv ]; then
+          python -m venv /venv;
+        fi &&
+
+        # Install dependencies in the virtual environment
+        /venv/bin/pip install -r requirements.txt &&
+
+        # Wait for PostgreSQL to be ready before running migrations
+        /venv/bin/python manage.py wait_for_db &&
+
+        # Apply migrations to the database
+        /venv/bin/python manage.py migrate &&
+
+        # Start the Django development server
+        /venv/bin/python manage.py runserver 0.0.0.0:8000"
+
     networks:
       - app_network
 
