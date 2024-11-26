@@ -1,5 +1,6 @@
 FROM python:3.12
-
+RUN useradd -m django_user
+USER django_user
 # Set the working directory
 WORKDIR /app
 
