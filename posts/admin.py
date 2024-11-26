@@ -15,7 +15,7 @@ class LikeModelAdmin(admin.ModelAdmin):
 
 @admin.register(CommentModel)
 class CommentModelAdmin(admin.ModelAdmin):
-    list_display = ('id', 'user', 'content','to_post')
+    list_display = ('id', 'user', 'content', 'to_post')
 
 
 admin.site.register(CommentLikeModel)
