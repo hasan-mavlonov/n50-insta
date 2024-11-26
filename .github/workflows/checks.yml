@@ -39,7 +39,11 @@ jobs:
 
       - name: Wait for PostgreSQL to be ready
         run: |
-          dockerize -wait tcp://localhost:5432 -timeout 1m
+          until pg_isready -h localhost -U test_user; do
+            echo "Waiting for PostgreSQL to be ready..."
+            sleep 2
+          done
+          echo "PostgreSQL is ready!"
 
       - name: Run tests
         run: |
