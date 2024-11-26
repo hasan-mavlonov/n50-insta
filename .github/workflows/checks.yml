@@ -17,10 +17,6 @@ jobs:
       - name: Clear pip cache
         run: pip cache purge
 
-      - name: Install dependencies
-        run: |
-          pip install -r requirements.txt
-
       - name: Checkout
         uses: actions/checkout@v3
 
